@@ -1,5 +1,6 @@
 use core::fmt;
 
+#[derive(Eq, PartialEq, Clone, Debug)]
 pub enum TokenType {
     /// Single-character tokens.
     Colon,
@@ -17,7 +18,6 @@ pub enum TokenType {
     Slash,
     Star,
     Pipe,
-    Pound,
 
     /// One or two character tokens.
     Bang,
@@ -39,10 +39,6 @@ pub enum TokenType {
     RArrow,
     StarEqual,
     SlashEqual,
-    SQuote,
-    DQuote,
-    TripleSQuote,
-    TripleDQuote,
 
     /// Literals.
     Identifier,
@@ -101,7 +97,6 @@ impl fmt::Display for TokenType {
             TokenType::LParen => write!(f, "LParen"),
             TokenType::Minus => write!(f, "Minus"),
             TokenType::Pipe => write!(f, "Pipe"),
-            TokenType::Pound => write!(f, "Pound"),
             TokenType::Plus => write!(f, "Plus"),
             TokenType::RBrace => write!(f, "RBrace"),
             TokenType::RBracket => write!(f, "RBracket"),
@@ -128,10 +123,6 @@ impl fmt::Display for TokenType {
             TokenType::RArrow => write!(f, "RArrow"),
             TokenType::StarEqual => write!(f, "StarEqual"),
             TokenType::SlashEqual => write!(f, "SlashEqual"),
-            TokenType::SQuote => write!(f, "SQuote"),
-            TokenType::DQuote => write!(f, "DQuote"),
-            TokenType::TripleSQuote => write!(f, "TripleSQuote"),
-            TokenType::TripleDQuote => write!(f, "TripleDQuote"),
             TokenType::Identifier => write!(f, "Identifier"),
             TokenType::String => write!(f, "String"),
             TokenType::Number => write!(f, "Number"),
@@ -177,20 +168,22 @@ impl fmt::Display for TokenType {
     }
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub enum Literal {
     String(String),
-    Number(usize),
+    Number(String),
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Token {
-    pub type_: TokenType,
-    pub content: String,
+    pub token_type: TokenType,
+    pub value: String,
     pub literal: Option<Literal>,
     pub line: usize,
 }
 
 impl Token {
     fn to_string(&self) -> String {
-        format!("{} {} {}", self.type_, self.content, self.line)
+        format!("{} {} {}", self.token_type, self.value, self.line)
     }
 }
