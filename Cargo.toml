@@ -11,4 +11,4 @@ phf = { version = "0.11.2", features = ["macros"] }
 
 [[bin]]
 path = "src/main.rs"
-name = "nereus"
+name = "pragrat"
