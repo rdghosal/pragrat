@@ -10,25 +10,25 @@ pub fn generate_ast(output_dir: &str) {
         output_dir,
         "Expr",
         &vec![
-            "Binary   =  left: Expr, operator: Token, right: Expr",
-            "Grouping =  expression: Expr",
-            "Literal  =  value: any",
-            "Unary    =  operator: Token, right: Expr",
+            "Binary   =  left: Box<dyn Expr<T>>, operator: Token, right: Box<dyn Expr<T>>",
+            "Grouping =  expression: Box<dyn Expr<T>>",
+            "Constant =  value: Literal",
+            "Unary    =  operator: Token, right: Box<dyn Expr<T>>",
         ],
     )
     .expect("Failed to generate AST expressions");
 }
 
 fn define_ast(output_dir: &str, base_name: &str, types: &Vec<&str>) -> Result<()> {
-    let path: String = format!("{}/{}.ts", output_dir, base_name.to_lowercase());
+    let path: String = format!("{}/{}.rs", output_dir, base_name.to_lowercase());
     match File::create(path) {
         Ok(mut f) => {
-            f.write(b"import Token from './token';\n\n")?;
+            f.write(b"use crate::types::{Literal, Token};\n\n")?;
             define_visitor(&mut f, base_name, &types)?;
-            f.write(format!("export abstract class {} {{\n", base_name).as_bytes())?;
+            f.write(format!("trait {}<T> {{\n", base_name).as_bytes())?;
             // The base accept() method.
-            f.write(b"\tabstract accept<R>(visitor: Visitor<R>): R;\n")?;
-            f.write(b"};\n\n")?;
+            f.write(b"\tfn accept(&self, visitor: Box<dyn Visitor<T>>) -> T;\n")?;
+            f.write(b"}\n\n")?;
             for t in types {
                 let substrs: Vec<&str> = t.split("=").collect();
                 let class_name = substrs[0].trim();
@@ -42,54 +42,61 @@ fn define_ast(output_dir: &str, base_name: &str, types: &Vec<&str>) -> Result<()
 }
 
 fn define_visitor(f: &mut File, base_name: &str, types: &Vec<&str>) -> Result<()> {
-    f.write(format!("export interface Visitor<R> {{\n").as_bytes())?;
-    for type_ in types {
-        let type_name: &str = type_.split("=").collect::<Vec<&str>>()[0].trim();
+    f.write(format!("trait Visitor<T> {{\n").as_bytes())?;
+    for t in types {
+        let substrs: Vec<&str> = t.split("=").collect();
+        let class_name = substrs[0].trim();
+        let fields = substrs[1].trim();
+        let is_generic = fields.contains("<T>");
+        let generic_cls_name = if is_generic {
+            format!("{}<T>", class_name)
+        } else {
+            class_name.to_string()
+        };
         f.write(
             format!(
-                "\tvisit{}{}({}: {}): R;\n",
-                type_name,
-                base_name,
+                "\tfn visit_{}_{}(&self, {}: &{}) -> T;\n",
+                class_name.to_lowercase(),
                 base_name.to_lowercase(),
-                type_name
+                class_name.to_lowercase(),
+                generic_cls_name,
             )
             .as_bytes(),
         )?;
     }
-    f.write(b"};\n\n")?;
+    f.write(b"}\n\n")?;
     Ok(())
 }
 
 fn define_type(f: &mut File, base_name: &str, class_name: &str, field_list: &str) -> Result<()> {
-    f.write(format!("export class {} extends {} {{\n", class_name, base_name).as_bytes())?;
+    let is_generic = field_list.contains("<T>");
+    let generic_cls_name = if is_generic {
+        format!("{}<T>", class_name)
+    } else {
+        class_name.to_string()
+    };
+
+    f.write(format!("struct {} {{\n", generic_cls_name).as_bytes())?;
 
     // Fields.
     let fields: Vec<&str> = field_list.split(", ").collect();
     for field in &fields {
-        f.write(format!("\tpublic readonly {};\n", field).as_bytes())?;
+        f.write(format!("\t{},\n", field).as_bytes())?;
     }
-
-    // Constructor.
-    f.write(format!("\tconstructor({}) {{\n", field_list).as_bytes())?;
-    f.write(b"\t\tsuper();\n")?;
-    for field in &fields {
-        let name = field.split(": ").collect::<Vec<&str>>()[0];
-        f.write(format!("\t\tthis.{} = {};\n", name, name).as_bytes())?;
-    }
-    f.write(b"\t}\n")?;
+    f.write(b"}\n\n")?;
 
     // Visitor pattern.
-    f.write(b"\n")?;
-    f.write(b"\taccept<R>(visitor: Visitor<R>): R {\n")?;
+    f.write(format!("impl<T> Expr<T> for {} {{\n", generic_cls_name).as_bytes())?;
+    f.write(b"\tfn accept(&self, visitor: Box<dyn Visitor<T>>) -> T {\n")?;
     f.write(
         format!(
-            "\t\treturn visitor.visit{}{}(this);\n",
-            class_name, base_name
+            "\t\treturn visitor.visit_{}_{}(self);\n",
+            class_name.to_lowercase(),
+            base_name.to_lowercase()
         )
         .as_bytes(),
     )?;
     f.write(b"\t}\n")?;
-
-    f.write(b"};\n\n")?;
+    f.write(b"}\n\n")?;
     Ok(())
 }
