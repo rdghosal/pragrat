@@ -81,21 +81,21 @@ impl Tokenizer {
     fn scan_token(&mut self) {
         if let Some(c) = self.advance() {
             match c {
-                '(' => self.add_token(TokenType::LParen, None),
-                ')' => self.add_token(TokenType::RParen, None),
+                '(' => self.add_token(TokenType::LPar, None),
+                ')' => self.add_token(TokenType::RPar, None),
                 '}' => self.add_token(TokenType::LBrace, None),
                 '{' => self.add_token(TokenType::RBrace, None),
-                '[' => self.add_token(TokenType::LBracket, None),
-                ']' => self.add_token(TokenType::RBracket, None),
+                '[' => self.add_token(TokenType::LSqB, None),
+                ']' => self.add_token(TokenType::RSqB, None),
                 ',' => self.add_token(TokenType::Comma, None),
                 '.' => self.add_token(TokenType::Dot, None),
-                ';' => self.add_token(TokenType::Semicolon, None),
+                ';' => self.add_token(TokenType::Semi, None),
                 ':' => self.add_token(TokenType::Colon, None),
                 '!' => {
                     if self.matches('=') {
-                        self.add_token(TokenType::BangEqual, None)
+                        self.add_token(TokenType::NotEqual, None)
                     } else {
-                        self.add_token(TokenType::Bang, None)
+                        self.add_token(TokenType::Exclamation, None)
                     }
                 }
                 '*' => {
@@ -124,7 +124,7 @@ impl Tokenizer {
                 }
                 '-' => {
                     if self.matches('=') {
-                        self.add_token(TokenType::MinusEqual, None)
+                        self.add_token(TokenType::MinEqual, None)
                     } else {
                         self.add_token(TokenType::Minus, None)
                     }
@@ -211,7 +211,7 @@ impl Tokenizer {
                         if let Some(t) = KEYWORDS.get(text) {
                             self.add_token(t.clone(), None)
                         } else {
-                            self.add_token(TokenType::Identifier, None)
+                            self.add_token(TokenType::Name, None)
                         }
                     } else {
                         panic!("Unexpected character {c:?}")
@@ -274,19 +274,19 @@ fn test_simple() {
             line: 2,
         },
         Token {
-            token_type: TokenType::Identifier,
+            token_type: TokenType::Name,
             value: "my_func".to_string(),
             literal: None,
             line: 2,
         },
         Token {
-            token_type: TokenType::LParen,
+            token_type: TokenType::LPar,
             value: "(".to_string(),
             literal: None,
             line: 2,
         },
         Token {
-            token_type: TokenType::RParen,
+            token_type: TokenType::RPar,
             value: ")".to_string(),
             literal: None,
             line: 2,
@@ -304,13 +304,13 @@ fn test_simple() {
             line: 2,
         },
         Token {
-            token_type: TokenType::Identifier,
+            token_type: TokenType::Name,
             value: "print".to_string(),
             literal: None,
             line: 3,
         },
         Token {
-            token_type: TokenType::LParen,
+            token_type: TokenType::LPar,
             value: "(".to_string(),
             literal: None,
             line: 3,
@@ -322,7 +322,7 @@ fn test_simple() {
             line: 3,
         },
         Token {
-            token_type: TokenType::RParen,
+            token_type: TokenType::RPar,
             value: ")".to_string(),
             literal: None,
             line: 3,

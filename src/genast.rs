@@ -1,8 +1,6 @@
 use std::{
-    env,
     fs::File,
     io::{Result, Write},
-    process,
 };
 
 pub fn generate_ast(output_dir: &str) {
@@ -10,10 +8,18 @@ pub fn generate_ast(output_dir: &str) {
         output_dir,
         "Expr",
         &vec![
-            "Binary   =  left: Box<dyn Expr<T>>, operator: Token, right: Box<dyn Expr<T>>",
-            "Grouping =  expression: Box<dyn Expr<T>>",
-            "Constant =  value: Literal",
-            "Unary    =  operator: Token, right: Box<dyn Expr<T>>",
+            "BoolOp       = op: Token, values: Vec<Box<dyn Expr<T>>>",
+            "NamedExpr    = target: Box<dyn Expr<T>>, value: Box<dyn Expr<T>>",
+            "BinOp        = left: Box<dyn Expr<T>>, op: Token, right: Box<dyn Expr<T>>",
+            "UnaryOp      = op: Token, operand: Box<dyn Expr<T>>",
+            "Lambda       = args: Arguments, body: Box<dyn Expr<T>>",
+            "IfExp        = test: Box<dyn Expr<T>>, body: Box<dyn Expr<T>>, orelse: Box<dyn Expr<T>>",
+            "Dict         = keys: Vec<Box<dyn Expr<T>>>, values: Vec<Box<dyn Expr<T>>>",
+            "Set          = elts: Vec<Box<dyn Expr<T>>>",
+            "ListComp     = elt: Box<dyn Expr<T>>, generators: Vec<Comprehension>",
+            "SetComp      = elt: Box<dyn Expr<T>>, generators: Vec<Comprehension>",
+            "DictComp     = key: Box<dyn Expr<T>>, value: Box<dyn Expr<T>>, generators: Vec<Comprehension>",
+            "GeneratorExp =  key: Box<dyn Expr<T>>, value: Box<dyn Expr<T>>, generators: Vec<Comprehension>",
         ],
     )
     .expect("Failed to generate AST expressions");
